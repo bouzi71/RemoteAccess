@@ -30,7 +30,7 @@ DWORD WinsockServer_RemoteClient::Recv()
 		if (res > 0)
 		{
 			USES_CONVERSION;
-			Log::Info(L"%s", A2W(buffer));
+			ProcessCommand(A2W(buffer));
 		}
 		else
 		{
@@ -52,4 +52,51 @@ void WinsockServer_RemoteClient::Send(const char* data, int32_t size)
 
 	USES_CONVERSION;
 	Log::Info(L"->[%s][%d]", A2W(data), sizeOrError);
+}
+
+void WinsockServer_RemoteClient::ProcessCommand(BSTR command)
+{
+	switch (command[0])
+	{
+		// Process started
+	case L'S':
+	{
+		Log::Green(L"%s", &command[1]);
+	}
+	break;
+
+	// Process exited
+	case L'X':
+	{
+		Log::Green(L"%s", &command[1]);
+	}
+	break;
+
+	// Info
+	case L'I':
+	{
+		Log::Info(L"Client: [%s]", &command[1]);
+	}
+	break;
+
+	// Message
+	case L'M':
+	{
+		Log::Print(L"%s", &command[1]);
+	}
+	break;
+
+	// Error
+	case L'E':
+	{
+		Log::Warn(L"Client error [%s].", &command[1]);
+	}
+	break;
+
+	default:
+	{
+		Log::Warn(L"Client: Unknown token [%c].", command[0]);
+	}
+	break;
+	}
 }

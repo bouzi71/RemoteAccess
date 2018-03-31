@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27428.2011
+VisualStudioVersion = 15.0.27004.2002
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{C890884D-DB89-4B50-B728-D61146EA5CF2}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -17,28 +17,20 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shared", "Shared\Shared.vcx
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
-		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C890884D-DB89-4B50-B728-D61146EA5CF2}.Debug|x64.ActiveCfg = Debug|Win32
 		{C890884D-DB89-4B50-B728-D61146EA5CF2}.Debug|x86.ActiveCfg = Debug|Win32
 		{C890884D-DB89-4B50-B728-D61146EA5CF2}.Debug|x86.Build.0 = Debug|Win32
-		{C890884D-DB89-4B50-B728-D61146EA5CF2}.Release|x64.ActiveCfg = Release|Win32
 		{C890884D-DB89-4B50-B728-D61146EA5CF2}.Release|x86.ActiveCfg = Release|Win32
 		{C890884D-DB89-4B50-B728-D61146EA5CF2}.Release|x86.Build.0 = Release|Win32
-		{5D910987-70B3-4B4F-8E81-D3E18E4BC244}.Debug|x64.ActiveCfg = Debug|Win32
 		{5D910987-70B3-4B4F-8E81-D3E18E4BC244}.Debug|x86.ActiveCfg = Debug|Win32
 		{5D910987-70B3-4B4F-8E81-D3E18E4BC244}.Debug|x86.Build.0 = Debug|Win32
-		{5D910987-70B3-4B4F-8E81-D3E18E4BC244}.Release|x64.ActiveCfg = Release|Win32
 		{5D910987-70B3-4B4F-8E81-D3E18E4BC244}.Release|x86.ActiveCfg = Release|Win32
 		{5D910987-70B3-4B4F-8E81-D3E18E4BC244}.Release|x86.Build.0 = Release|Win32
-		{584D67D5-0440-4176-893D-6897D1D9041C}.Debug|x64.ActiveCfg = Debug|Win32
 		{584D67D5-0440-4176-893D-6897D1D9041C}.Debug|x86.ActiveCfg = Debug|Win32
 		{584D67D5-0440-4176-893D-6897D1D9041C}.Debug|x86.Build.0 = Debug|Win32
-		{584D67D5-0440-4176-893D-6897D1D9041C}.Release|x64.ActiveCfg = Release|Win32
 		{584D67D5-0440-4176-893D-6897D1D9041C}.Release|x86.ActiveCfg = Release|Win32
 		{584D67D5-0440-4176-893D-6897D1D9041C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection

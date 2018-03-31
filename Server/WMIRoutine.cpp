@@ -256,5 +256,5 @@ void WMIRoutine::WMICreateProcess(const CComBSTR& command_line)
 
 void WMIRoutine::ExecuteCommand(const CComBSTR & command_line)
 {
-	WMICreateProcess(L"cmd.exe /c \"" + command_line + " > C:\\Temp\\log_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%.txt\"");
+	WMICreateProcess(L"cmd.exe /c /u \"" + command_line + " > C:\\Temp\\log_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%.txt\"");
 }

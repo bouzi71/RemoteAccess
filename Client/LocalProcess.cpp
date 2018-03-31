@@ -34,7 +34,7 @@ void LocalProcess::Init()
 
 	if (!CreatePipe(&m_ReadStdOut, &m_HookStdOut, &sa, 0))
 	{
-		Log::Warn(L"CreatePipe error");
+		m_Client->Send(L"ECreatePipe error.");
 		return;
 	}
 
@@ -46,7 +46,7 @@ void LocalProcess::Init()
 
 	if (!CreateProcess(
 		NULL,
-		L"cmd.exe /c \"" + m_Name + "\"",
+		L"cmd.exe /U /c \"" + m_Name + "\"",
 		NULL,
 		NULL,
 		TRUE,
@@ -57,15 +57,16 @@ void LocalProcess::Init()
 		&m_ProcessInfo)
 		)
 	{
-		Log::Warn(L"CreateProcess error");
+		m_Client->Send(L"ECreateProcess error.");
+		return;
 	}
 
-	// Start thread
+	Sleep(100); // ???? AV
+	m_Client->Send(L"SThe process [%s] was started.", m_Name);
+	Sleep(100);
 	Thread<LocalProcess> thread(this, &LocalProcess::WaitProcess);
-	if (thread.start())
-	{
-		Log::Info(L"Process [%s] thread started", m_Name);
-	}
+	thread.start();
+	Sleep(100);
 }
 
 DWORD LocalProcess::WaitProcess()
@@ -79,7 +80,9 @@ DWORD LocalProcess::WaitProcess()
 		GetExitCodeProcess(m_ProcessInfo.hProcess, &exitCode);
 		if (exitCode != STILL_ACTIVE)
 		{
-			Log::Green(L"[%s] -> Exit code is [%d]", m_Name, exitCode);
+			Sleep(100);
+			m_Client->Send(L"XThe process [%s] was exited with code [%d].", m_Name, exitCode);
+			Sleep(100);
 			return exitCode;
 		}
 
@@ -96,22 +99,19 @@ DWORD LocalProcess::WaitProcess()
 			while (readedBytes >= 1023)
 			{
 				ReadFile(m_ReadStdOut, buffer, 1023, &readedBytes, NULL);
-				m_Client->Send(L"[%s]", buffer);
+				USES_CONVERSION;
+				m_Client->Send(L"M%s", A2W(buffer));
 				bzero(buffer);
 			}
 		}
 		else
 		{
 			ReadFile(m_ReadStdOut, buffer, 1023, &readedBytes, NULL);
-			m_Client->Send(L"[%s]", buffer);
+			USES_CONVERSION;
+			m_Client->Send(L"M%s", A2W(buffer));
 			bzero(buffer);
 		}
 	}
 
 	return -1;
-}
-
-void LocalProcess::PrintStdOutputs(char* str, DWORD& readedBytes)
-{
-
 }

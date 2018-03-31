@@ -13,9 +13,6 @@ public:
 	DWORD WaitProcess();
 
 private:
-	void PrintStdOutputs(char* str, DWORD& readedBytes);
-
-private:
 	CComBSTR                 m_Name;
 	PROCESS_INFORMATION      m_ProcessInfo;
 	STARTUPINFO              m_StartupInfo;

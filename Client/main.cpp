@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 // Additional
-#include "LocalProcess.h"
 #include "WinsockClient.h"
 
 int main()
@@ -11,7 +10,6 @@ int main()
 
 	WinsockClient client;
 
-	system("pause");
 	return 0;
 }
 

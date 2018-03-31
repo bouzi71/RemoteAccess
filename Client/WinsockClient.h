@@ -8,8 +8,8 @@ public:
 
 public:
 	DWORD Recv();
-	void Send(const char* data, ...);
 	void Send(CComBSTR data, ...);
+	void ProcessCommand(BSTR command);
 
 private:
 	SOCKET m_Socket;

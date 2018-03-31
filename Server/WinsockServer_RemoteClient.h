@@ -9,6 +9,7 @@ public:
 public:
 	DWORD Recv();
 	void Send(const char* data, int32_t size);
+	void ProcessCommand(BSTR command);
 
 private:
 	SOCKET m_Socket;
