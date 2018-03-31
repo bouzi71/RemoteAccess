@@ -14,6 +14,7 @@ public:
 	CComBSTR WMIGetProcessID(const CComBSTR& process_name);
 	bool WMIProcessExists(const CComBSTR& pid);
 	void WMICreateProcess(const CComBSTR& command_line);
+	void ExecuteCommand(const CComBSTR& command_line);
 
 private:
 	void CreateWbemLocatorObject();

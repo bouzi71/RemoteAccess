@@ -21,7 +21,7 @@ void DebugOutput_ConsoleWindows::Destroy()
 
 //
 
-void DebugOutput_ConsoleWindows::Print(wstring _messageFmt, DebugOutput::DebugMessageType _type)
+void DebugOutput_ConsoleWindows::Print(std::wstring _messageFmt, DebugOutput::DebugMessageType _type)
 {
 	// Set color
 	unsigned short color;
@@ -46,6 +46,6 @@ void DebugOutput_ConsoleWindows::Print(wstring _messageFmt, DebugOutput::DebugMe
 
 	// Add
 	SetConsoleTextAttribute(hConsole, color);
-	wcout << _messageFmt << endl;
+	std::wcout << _messageFmt << std::endl;
 	SetConsoleTextAttribute(hConsole, defaultConsoleColor);
 }

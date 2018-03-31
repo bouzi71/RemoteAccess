@@ -22,5 +22,5 @@ public:
 	void PushMessage(DebugOutput::DebugMessageType _type, const wchar_t* _message, va_list& _vaList);
 
 protected:
-	virtual void Print(wstring _messageFmt, DebugOutput::DebugMessageType _type) = 0;
+	virtual void Print(std::wstring _messageFmt, DebugOutput::DebugMessageType _type) = 0;
 };

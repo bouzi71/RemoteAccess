@@ -9,7 +9,7 @@
 // Additional
 #include "DebugOutput_ConsoleWindows.h"
 
-vector<DebugOutput*> Log::debugOutputs;
+std::vector<DebugOutput*> Log::debugOutputs;
 
 bool Log::Init()
 {

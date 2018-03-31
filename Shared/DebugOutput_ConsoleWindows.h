@@ -9,7 +9,7 @@ public:
 	void Destroy();
 
 protected:
-	void Print(wstring _messageFmt, DebugOutput::DebugMessageType _type);
+	void Print(std::wstring _messageFmt, DebugOutput::DebugMessageType _type);
 
 protected:
 	enum ConsoleWindowsColor

@@ -38,6 +38,7 @@ WMIRoutine::~WMIRoutine()
 	SecureZeroMemory(m_Password, sizeof(m_Password));
 }
 
+//--
 
 void WMIRoutine::CreateWbemLocatorObject()
 {
@@ -53,8 +54,8 @@ void WMIRoutine::CreateWbemLocatorObject()
 void WMIRoutine::WMISetProxyBlanket(IUnknown* proxy)
 {
 	SEC_WINNT_AUTH_IDENTITY_W pAuthIdentity = { 0 };
-	if (!m_IsLocal)
-	{
+	//if (!m_IsLocal)
+	//{
 		pAuthIdentity.User = (unsigned short*)(const wchar_t*)m_UserName;
 		pAuthIdentity.UserLength = m_UserName.Length();
 		pAuthIdentity.Domain = (unsigned short*)(const wchar_t*)m_Domain;
@@ -62,31 +63,31 @@ void WMIRoutine::WMISetProxyBlanket(IUnknown* proxy)
 		pAuthIdentity.Password = (unsigned short*)(const wchar_t*)m_Password;
 		pAuthIdentity.PasswordLength = m_Password.Length();
 		pAuthIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	}
+	//}
 
 	HRESULT hr = CoSetProxyBlanket(
-		proxy,
-		RPC_C_AUTHN_DEFAULT,
-		RPC_C_AUTHZ_DEFAULT,
+		proxy, 
+		RPC_C_AUTHN_WINNT,
+		RPC_C_AUTHZ_NONE, 
 		NULL,
-		RPC_C_AUTHN_LEVEL_CALL,
+		RPC_C_AUTHN_LEVEL_CALL, 
 		RPC_C_IMP_LEVEL_IMPERSONATE,
-		&pAuthIdentity,
+		&pAuthIdentity, 
 		EOAC_NONE
 	);
 	if (FAILED(hr))
 	{
 		Log::Error(L"Could not set proxy blanket. [%d]", hr);
 	}
-	Log::Green(L"Proxy blanket setted! [%s, %s, %s]!", m_HostName, m_Domain, m_UserName);
+	//Log::Green(L"Proxy blanket setted! [%s, %s, %s]!", m_HostName, m_Domain, m_UserName);
 }
 
 void WMIRoutine::ConnectToWMIService()
 {
 	HRESULT hr = m_WbemLocator->ConnectServer(
 		BSTR(L"\\\\" + m_HostName + L"\\root\\cimv2"),
-		m_IsLocal ? NULL : (BSTR)m_UserName,
-		m_IsLocal ? NULL : (BSTR)m_Password,
+		m_Domain + L"\\" + m_UserName,
+		(BSTR)m_Password,
 		0,
 		NULL,
 		0,
@@ -95,7 +96,7 @@ void WMIRoutine::ConnectToWMIService()
 	);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Could not connect to remote WMI services on [%s] host. ", m_HostName, hr);
+		Log::Error(L"Could not connect to remote WMI services on [%s] host. [%d]", m_HostName, hr);
 	}
 	Log::Green(L"Connected to remote proxy [%s, %s]!", m_HostName, m_UserName);
 
@@ -232,4 +233,28 @@ void WMIRoutine::WMICreateProcess(const CComBSTR& command_line)
 	CComBSTR pid = IntegerToString(V_INT(&return_value));
 
 	Log::Info(L"Process with pid [%d] started.", pid);
+
+	int i;
+	bool process_exists;
+	for (i = 0; i < 10; ++i)
+	{
+		process_exists = WMIProcessExists(pid);
+		if (!process_exists)
+		{
+			Log::Info(L"Process [%s] finished.\n", command_line);
+			break;
+		}
+		Sleep(1000);
+		Log::Info(L"Waiting for [%s]...", command_line);
+	}
+
+	if (process_exists)
+	{
+		Log::Error(L"Process was not closed within 20 seconds: [%s]", command_line);
+	}
+}
+
+void WMIRoutine::ExecuteCommand(const CComBSTR & command_line)
+{
+	WMICreateProcess(L"cmd.exe /c \"" + command_line + " > C:\\Temp\\log_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%.txt\"");
 }
