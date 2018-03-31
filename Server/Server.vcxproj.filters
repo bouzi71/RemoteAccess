@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Debug.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugOutput.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugOutput_ConsoleWindows.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="COMLoader.h" />
+    <ClInclude Include="WMIRoutine.h">
+      <Filter>WMI</Filter>
+    </ClInclude>
+    <ClInclude Include="WMIObject.h">
+      <Filter>WMI</Filter>
+    </ClInclude>
+    <ClInclude Include="SmartPtr.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="DebugOutput.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugOutput_ConsoleWindows.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="COMLoader.cpp" />
+    <ClCompile Include="WMIRoutine.cpp">
+      <Filter>WMI</Filter>
+    </ClCompile>
+    <ClCompile Include="WMIObject.cpp">
+      <Filter>WMI</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Debug">
+      <UniqueIdentifier>{eabc2fe2-7fae-4cc1-aed7-3dda15196b32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{81e1cb57-0aa2-47c9-ad32-465ae08da4c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WMI">
+      <UniqueIdentifier>{d7619aa5-845c-42dd-afc1-02b5e1486ca0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
