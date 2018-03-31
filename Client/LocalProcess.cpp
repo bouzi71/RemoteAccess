@@ -8,21 +8,6 @@ LocalProcess::LocalProcess(WinsockClient* client, CComBSTR name) :
 	m_Name(name),
 	m_Client(client)
 {
-	Init();
-}
-
-LocalProcess::~LocalProcess()
-{
-	CloseHandle(m_ProcessInfo.hThread);
-	CloseHandle(m_ProcessInfo.hProcess);
-	CloseHandle(m_HookStdOut);
-	CloseHandle(m_ReadStdOut);
-}
-
-//--
-
-void LocalProcess::Init()
-{
 	SECURITY_DESCRIPTOR sd;
 	InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
 	SetSecurityDescriptorDacl(&sd, true, NULL, false);
@@ -69,9 +54,17 @@ void LocalProcess::Init()
 	Sleep(100);
 }
 
+LocalProcess::~LocalProcess()
+{
+	CloseHandle(m_ProcessInfo.hThread);
+	CloseHandle(m_ProcessInfo.hProcess);
+	CloseHandle(m_HookStdOut);
+	CloseHandle(m_ReadStdOut);
+}
+
 DWORD LocalProcess::WaitProcess()
 {
-	char buffer[1024];
+	char buffer[DEFAULT_BUFLEN];
 	bzero(buffer);
 
 	while (true)
@@ -88,17 +81,17 @@ DWORD LocalProcess::WaitProcess()
 
 		DWORD readedBytes;
 		DWORD avaliableBytes;
-		PeekNamedPipe(m_ReadStdOut, buffer, 1023, &readedBytes, &avaliableBytes, NULL);
+		PeekNamedPipe(m_ReadStdOut, buffer, DEFAULT_BUFLEN - 1, &readedBytes, &avaliableBytes, NULL);
 		if (readedBytes == 0)
 		{
 			continue;
 		}
 		
-		if (avaliableBytes > 1023)
+		if (avaliableBytes > DEFAULT_BUFLEN - 1)
 		{
-			while (readedBytes >= 1023)
+			while (readedBytes >= DEFAULT_BUFLEN - 1)
 			{
-				ReadFile(m_ReadStdOut, buffer, 1023, &readedBytes, NULL);
+				ReadFile(m_ReadStdOut, buffer, DEFAULT_BUFLEN - 1, &readedBytes, NULL);
 				USES_CONVERSION;
 				m_Client->Send(L"M%s", A2W(buffer));
 				bzero(buffer);
@@ -106,7 +99,7 @@ DWORD LocalProcess::WaitProcess()
 		}
 		else
 		{
-			ReadFile(m_ReadStdOut, buffer, 1023, &readedBytes, NULL);
+			ReadFile(m_ReadStdOut, buffer, DEFAULT_BUFLEN - 1, &readedBytes, NULL);
 			USES_CONVERSION;
 			m_Client->Send(L"M%s", A2W(buffer));
 			bzero(buffer);

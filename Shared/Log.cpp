@@ -110,7 +110,6 @@ void Log::Error(const wchar_t* _message, ...)
 	va_start(args, _message);
 
 	PushMessageToAllDebugOutputs(_message, DebugOutput::DebugMessageType::TYPE_ERROR, args);
-	Fatal(_message);
 
 	va_end(args);
 }

@@ -9,7 +9,6 @@ public:
 	~LocalProcess();
 
 public:
-	void Init();
 	DWORD WaitProcess();
 
 private:

@@ -30,5 +30,4 @@ private:
 	CComBSTR        m_UserName;
 	CComBSTR        m_Domain;
 	CComBSTR        m_Password;
-	bool            m_IsLocal;
 };

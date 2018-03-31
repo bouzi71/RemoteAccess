@@ -23,7 +23,7 @@ public:
 		{
 			return false;
 		}
-		ReleaseSemaphore(hInterrupt, 1, NULL);  // keep interrupted state
+		ReleaseSemaphore(hInterrupt, 1, NULL);
 		return true;
 	}
 
@@ -34,11 +34,8 @@ public:
 		{
 			GetExitCodeThread(hThread, &exitCode);
 		}
-		if (exitCode == STILL_ACTIVE)
-		{
-			return true;
-		}
-		return false;
+
+		return exitCode == STILL_ACTIVE;
 	}
 
 	__declspec(property(get = getThreadHandle)) HANDLE ThreadHandle;

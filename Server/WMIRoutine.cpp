@@ -12,8 +12,7 @@ WMIRoutine::WMIRoutine(CComBSTR host) :
 	m_HostName(host),
 	m_Domain(NULL),
 	m_UserName(NULL),
-	m_Password(NULL),
-	m_IsLocal(true)
+	m_Password(NULL)
 {
 	CreateWbemLocatorObject();
 	ConnectToWMIService();
@@ -23,8 +22,7 @@ WMIRoutine::WMIRoutine(CComBSTR host, CComBSTR domain, CComBSTR user, CComBSTR p
 	m_HostName(host),
 	m_Domain(domain),
 	m_UserName(user),
-	m_Password(password),
-	m_IsLocal(false)
+	m_Password(password)
 {
 	CreateWbemLocatorObject();
 	ConnectToWMIService();
@@ -54,32 +52,28 @@ void WMIRoutine::CreateWbemLocatorObject()
 void WMIRoutine::WMISetProxyBlanket(IUnknown* proxy)
 {
 	SEC_WINNT_AUTH_IDENTITY_W pAuthIdentity = { 0 };
-	//if (!m_IsLocal)
-	//{
-		pAuthIdentity.User = (unsigned short*)(const wchar_t*)m_UserName;
-		pAuthIdentity.UserLength = m_UserName.Length();
-		pAuthIdentity.Domain = (unsigned short*)(const wchar_t*)m_Domain;
-		pAuthIdentity.DomainLength = m_Domain.Length();
-		pAuthIdentity.Password = (unsigned short*)(const wchar_t*)m_Password;
-		pAuthIdentity.PasswordLength = m_Password.Length();
-		pAuthIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	//}
+	pAuthIdentity.User = (unsigned short*)(const wchar_t*)m_UserName;
+	pAuthIdentity.UserLength = m_UserName.Length();
+	pAuthIdentity.Domain = (unsigned short*)(const wchar_t*)m_Domain;
+	pAuthIdentity.DomainLength = m_Domain.Length();
+	pAuthIdentity.Password = (unsigned short*)(const wchar_t*)m_Password;
+	pAuthIdentity.PasswordLength = m_Password.Length();
+	pAuthIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	HRESULT hr = CoSetProxyBlanket(
-		proxy, 
+		proxy,
 		RPC_C_AUTHN_WINNT,
-		RPC_C_AUTHZ_NONE, 
+		RPC_C_AUTHZ_NONE,
 		NULL,
-		RPC_C_AUTHN_LEVEL_CALL, 
+		RPC_C_AUTHN_LEVEL_CALL,
 		RPC_C_IMP_LEVEL_IMPERSONATE,
-		&pAuthIdentity, 
+		&pAuthIdentity,
 		EOAC_NONE
 	);
 	if (FAILED(hr))
 	{
 		Log::Error(L"Could not set proxy blanket. [%d]", hr);
 	}
-	//Log::Green(L"Proxy blanket setted! [%s, %s, %s]!", m_HostName, m_Domain, m_UserName);
 }
 
 void WMIRoutine::ConnectToWMIService()

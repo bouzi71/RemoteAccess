@@ -3,6 +3,10 @@
 // General
 #include "WinsockServer_RemoteClient.h"
 
+// Additional
+#include <iostream>
+#include <conio.h> 
+
 WinsockServer_RemoteClient::WinsockServer_RemoteClient(SOCKET socket) :
 	m_Socket(socket)
 {
@@ -21,8 +25,11 @@ DWORD WinsockServer_RemoteClient::Recv()
 	char buffer[DEFAULT_BUFLEN];
 	int32_t bufferLenght = DEFAULT_BUFLEN;
 
-	const char* rr = "Sping 127.0.0.1";
-	Send(rr, strlen(rr) + 1);
+	std::string comma;
+	std::getline(std::cin, comma);
+
+	std::string command = 'S' + comma;
+	Send(command.c_str(), command.length() + 1);
 
 	int res;
 	do {
@@ -35,11 +42,11 @@ DWORD WinsockServer_RemoteClient::Recv()
 		else
 		{
 			Log::Warn(L"Connection closed");
-			return 0;
 		}
 
 	} while (res > 0);
-	return -1;
+
+	return 0;
 }
 
 void WinsockServer_RemoteClient::Send(const char* data, int32_t size)
@@ -47,11 +54,8 @@ void WinsockServer_RemoteClient::Send(const char* data, int32_t size)
 	int sizeOrError = send(m_Socket, data, size, 0);
 	if (sizeOrError == SOCKET_ERROR)
 	{
-		Log::Error(L"send failed with error: [%d]", WSAGetLastError());
+		Log::Error(L"[send] failed with error [%d].", WSAGetLastError());
 	}
-
-	USES_CONVERSION;
-	Log::Info(L"->[%s][%d]", A2W(data), sizeOrError);
 }
 
 void WinsockServer_RemoteClient::ProcessCommand(BSTR command)
@@ -89,7 +93,7 @@ void WinsockServer_RemoteClient::ProcessCommand(BSTR command)
 	// Error
 	case L'E':
 	{
-		Log::Warn(L"Client error [%s].", &command[1]);
+		Log::Warn(L"Client error: [%s].", &command[1]);
 	}
 	break;
 

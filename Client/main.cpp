@@ -5,7 +5,7 @@
 
 int main()
 {
-	_wsetlocale(LC_ALL, L"Russian");
+	setlocale(LC_ALL, "Russian");
 	Log::Init();
 
 	WinsockClient client;
