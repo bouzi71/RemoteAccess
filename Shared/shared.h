@@ -16,6 +16,8 @@ typedef const std::wstring& cwstring;
 #include <cmath>
 #include <typeinfo>
 #include <memory>
+#include <iostream>
+#include <conio.h> 
 
 #ifndef WIN32_LEAN_AND_MEAN
 #   define WIN32_LEAN_AND_MEAN 1

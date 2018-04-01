@@ -5,21 +5,20 @@
 class WMIRoutine
 {
 public:
-	WMIRoutine(CComBSTR host);
 	WMIRoutine(CComBSTR host, CComBSTR domain, CComBSTR user, CComBSTR password);
 	~WMIRoutine();
 
 public:
-	WMIObject* GetWMIObject(const CComBSTR& wmi_query);
-	CComBSTR WMIGetProcessID(const CComBSTR& process_name);
-	bool WMIProcessExists(const CComBSTR& pid);
-	void WMICreateProcess(const CComBSTR& command_line);
-	void ExecuteCommand(const CComBSTR& command_line);
+	WMIObject* GetWMIObject(const CComBSTR& wmiQuery);
+	std::vector<WMIObject*> GetWMIQueryObject(const CComBSTR& wmiQuery);
+	CComBSTR GetProcessID(const CComBSTR& processName);
+	bool IsProcessExists(const CComBSTR& pid);
+	void ExecuteProcess(const CComBSTR& commandLine);
+	void ExecuteCommand(const CComBSTR& commandLine);
 
 private:
-	void CreateWbemLocatorObject();
-	void ConnectToWMIService();
-	void WMISetProxyBlanket(IUnknown* proxy);
+	void SetProxy(IUnknown* proxy);
+	CComBSTR ExecuteProcessInternal(const CComBSTR& commandLine);
 
 private:
 	CComPtr<IWbemLocator>   m_WbemLocator;

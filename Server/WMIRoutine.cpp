@@ -3,29 +3,35 @@
 // General
 #include "WMIRoutine.h"
 
-// Additional
-#include "Common.h"
-#include "Log.h"
-
-
-WMIRoutine::WMIRoutine(CComBSTR host) :
-	m_HostName(host),
-	m_Domain(NULL),
-	m_UserName(NULL),
-	m_Password(NULL)
-{
-	CreateWbemLocatorObject();
-	ConnectToWMIService();
-}
-
 WMIRoutine::WMIRoutine(CComBSTR host, CComBSTR domain, CComBSTR user, CComBSTR password) :
 	m_HostName(host),
 	m_Domain(domain),
 	m_UserName(user),
 	m_Password(password)
 {
-	CreateWbemLocatorObject();
-	ConnectToWMIService();
+	HRESULT hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&m_WbemLocator);
+	if (FAILED(hr))
+	{
+		Log::Error(L"Failed to create IWbemLocator object. [0x%x].", hr);
+	}
+
+	hr = m_WbemLocator->ConnectServer(
+		BSTR(L"\\\\" + m_HostName + L"\\root\\cimv2"),
+		m_Domain + L"\\" + m_UserName,
+		(BSTR)m_Password,
+		0,
+		NULL,
+		0,
+		0,
+		&m_WbemServices
+	);
+	if (FAILED(hr))
+	{
+		Log::Error(L"Could not connect to remote WMI services on [%s] host. [0x%x]", m_HostName, hr);
+	}
+	Log::Info(L"Connected to remote proxy [%s, %s]!", m_HostName, m_UserName);
+
+	SetProxy(m_WbemServices);
 }
 
 WMIRoutine::~WMIRoutine()
@@ -38,18 +44,7 @@ WMIRoutine::~WMIRoutine()
 
 //--
 
-void WMIRoutine::CreateWbemLocatorObject()
-{
-	HRESULT hr = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&m_WbemLocator);
-	if (FAILED(hr))
-	{
-		Log::Error(L"Failed to create IWbemLocator object. [%d].", hr);
-	}
-
-	Log::Info(L"IWbemLocator object created!");
-}
-
-void WMIRoutine::WMISetProxyBlanket(IUnknown* proxy)
+void WMIRoutine::SetProxy(IUnknown* proxy)
 {
 	SEC_WINNT_AUTH_IDENTITY_W pAuthIdentity = { 0 };
 	pAuthIdentity.User = (unsigned short*)(const wchar_t*)m_UserName;
@@ -72,73 +67,87 @@ void WMIRoutine::WMISetProxyBlanket(IUnknown* proxy)
 	);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Could not set proxy blanket. [%d]", hr);
+		Log::Error(L"Could not set proxy. [0x%x]", hr);
 	}
 }
 
-void WMIRoutine::ConnectToWMIService()
+WMIObject* WMIRoutine::GetWMIObject(const CComBSTR& wmiQuery)
 {
-	HRESULT hr = m_WbemLocator->ConnectServer(
-		BSTR(L"\\\\" + m_HostName + L"\\root\\cimv2"),
-		m_Domain + L"\\" + m_UserName,
-		(BSTR)m_Password,
-		0,
-		NULL,
-		0,
-		0,
-		&m_WbemServices
-	);
-	if (FAILED(hr))
-	{
-		Log::Error(L"Could not connect to remote WMI services on [%s] host. [%d]", m_HostName, hr);
-	}
-	Log::Green(L"Connected to remote proxy [%s, %s]!", m_HostName, m_UserName);
-
-	WMISetProxyBlanket(m_WbemServices);
-}
-
-WMIObject* WMIRoutine::GetWMIObject(const CComBSTR& wmi_query)
-{
-	CComPtr<IEnumWbemClassObject> enum_query_result;
+	CComPtr<IEnumWbemClassObject> result;
 	HRESULT hr = m_WbemServices->ExecQuery(
 		BSTR(L"WQL"),
-		wmi_query,
-		WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY,
+		wmiQuery,
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
 		NULL,
-		&enum_query_result
+		&result
 	);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Could not execute WMI query:\n [%d]", wmi_query, hr);
+		Log::Error(L"Could not execute WMI query [%s] [0x%x]", wmiQuery, hr);
 	}
 
-	WMISetProxyBlanket(enum_query_result);
+	SetProxy(result);
 
 	IWbemClassObject* obj[1];
 
-	ULONG uReturned;
-	hr = enum_query_result->Next(WBEM_INFINITE, 1, obj, &uReturned);
+	ULONG ret;
+	hr = result->Next(WBEM_INFINITE, 1, obj, &ret);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Could not get object from WMI query:\n $s \n [%s]", wmi_query, hr);
+		Log::Error(L"Could not get object from WMI query: [$s] [0x%x]", wmiQuery, hr);
 	}
 
-	return new WMIObject(uReturned != 0 ? obj[0] : NULL);
+	return new WMIObject(ret != 0 ? obj[0] : NULL);
 }
 
-CComBSTR WMIRoutine::WMIGetProcessID(const CComBSTR& process_name)
+std::vector<WMIObject*> WMIRoutine::GetWMIQueryObject(const CComBSTR& wmiQuery)
 {
-	SmartPtr<WMIObject> proc_object = GetWMIObject(CComBSTR(L"SELECT * FROM Win32_Process WHERE Caption=\"" + process_name + L"\""));
+	CComPtr<IEnumWbemClassObject> result;
+	HRESULT hr = m_WbemServices->ExecQuery(
+		BSTR(L"WQL"),
+		wmiQuery,
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL,
+		&result
+	);
+	if (FAILED(hr))
+	{
+		Log::Error(L"Could not get object from WMI query: [$s] [0x%x]", wmiQuery, hr);
+	}
+
+	SetProxy(result);
+
+	std::vector<WMIObject*> objects;
+
+	while (result)
+	{
+		IWbemClassObject* pclsObj;
+		ULONG ret = 0;
+		hr = result->Next(WBEM_INFINITE, 1, &pclsObj, &ret);
+		if (FAILED(hr) || ret == 0)
+		{
+			break;
+		}
+
+		objects.push_back(new WMIObject(pclsObj));
+	}
+
+	return objects;
+}
+
+CComBSTR WMIRoutine::GetProcessID(const CComBSTR& processName)
+{
+	SmartPtr<WMIObject> proc_object = GetWMIObject(CComBSTR(L"SELECT * FROM Win32_Process WHERE Caption=\"" + processName + L"\""));
 
 	if (proc_object == NULL)
 	{
 		return NULL;
 	}
 
-	return proc_object != NULL && proc_object->GetWMIObjectProperty(L"Handle");
+	return proc_object != NULL && proc_object->Get(L"Handle");
 }
 
-bool WMIRoutine::WMIProcessExists(const CComBSTR& pid)
+bool WMIRoutine::IsProcessExists(const CComBSTR& pid)
 {
 	CComBSTR query = L"SELECT * FROM Win32_Process WHERE Handle=" + pid;
 
@@ -148,7 +157,47 @@ bool WMIRoutine::WMIProcessExists(const CComBSTR& pid)
 	return exists;
 }
 
-void WMIRoutine::WMICreateProcess(const CComBSTR& command_line)
+void WMIRoutine::ExecuteProcess(const CComBSTR& processName)
+{
+	CComBSTR pid = ExecuteProcessInternal(processName);
+
+	bool process_exists;
+	for (int i = 0; i < 25; i++)
+	{
+		process_exists = IsProcessExists(pid);
+		if (process_exists)
+		{
+			Log::Info(L"Process [%s] started.", processName);
+			break;
+		}
+		Sleep(1000);
+	}
+}
+
+void WMIRoutine::ExecuteCommand(const CComBSTR& commandLine)
+{
+	//CComBSTR pid = ExecuteProcessInternal(L"cmd.exe /c /u \"" + commandLine + " > C:\\Temp\\log_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%.txt\"");
+	CComBSTR pid = ExecuteProcessInternal(L"cmd.exe /c /u \"" + commandLine + "\"");
+
+	bool process_exists;
+	for (int i = 0; i < 25; i++)
+	{
+		process_exists = IsProcessExists(pid);
+		if (!process_exists)
+		{
+			Log::Info(L"Command [%s] was finished.", commandLine);
+			break;
+		}
+		Sleep(1000);
+	}
+
+	if (process_exists)
+	{
+		Log::Error(L"Command line [%s] was not closed in 25 sec.", commandLine);
+	}
+}
+
+CComBSTR WMIRoutine::ExecuteProcessInternal(const CComBSTR& commandLine)
 {
 	CComPtr<IWbemClassObject> proc_obj;
 	HRESULT hr = m_WbemServices->GetObject(
@@ -160,25 +209,25 @@ void WMIRoutine::WMICreateProcess(const CComBSTR& command_line)
 	);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Could not get Win32_Process WMI object. ", hr);
+		Log::Error(L"[0x%x]", hr);
 	}
 
 	CComPtr<IWbemClassObject> pInParams;
 	hr = proc_obj->GetMethod(L"Create", 0, &pInParams, NULL);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Could not get information about Win32_Process.Create method. ", hr);
+		Log::Error(L"[0x%x]", hr);
 	}
 
-	CComVariant v = command_line;
-	hr = pInParams->Put(L"CommandLine", 0, &v, VT_BSTR);
+	CComVariant cmdLine = commandLine;
+	hr = pInParams->Put(L"CommandLine", 0, &cmdLine, VT_BSTR);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Unable to set 'CommandLine' parameter value of Win32_Process.Create method.", hr);
+		Log::Error(L"[0x%x]", hr);
 	}
 
-	CComPtr<IWbemClassObject> ppOutParams;
-	CComPtr<IWbemCallResult> ppCallResult;
+	CComPtr<IWbemClassObject> outParams;
+	CComPtr<IWbemCallResult> callResult;
 
 	hr = m_WbemServices->ExecMethod(
 		CComBSTR(L"Win32_Process"),
@@ -186,69 +235,48 @@ void WMIRoutine::WMICreateProcess(const CComBSTR& command_line)
 		0,
 		NULL,
 		pInParams,
-		&ppOutParams,
-		&ppCallResult
+		&outParams,
+		&callResult
 	);
 	if (FAILED(hr))
 	{
 		Log::Error(L"Unable to execute Win32_Process.Create method.", hr);
 	}
 
-	LONG plStatus;
-	WMISetProxyBlanket(ppCallResult);
-	hr = ppCallResult->GetCallStatus(WBEM_INFINITE, &plStatus);
+	LONG status;
+	SetProxy(callResult);
+	hr = callResult->GetCallStatus(WBEM_INFINITE, &status);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Unable to get call status of Win32_Process.Create method.", hr);
+		Log::Error(L"[0x%x]", hr);
 	}
 
-	if (plStatus != 0)
+	if (status != 0)
 	{
-		Log::Error(L"Call status of Win32_Process.Create method is incorrect: %d", plStatus);
+		Log::Error(L"[0x%x]", status);
 	}
 
 	CComVariant return_value;
-	hr = ppOutParams->Get(CComBSTR(L"ReturnValue"), 0, &return_value, NULL, 0);
+	hr = outParams->Get(CComBSTR(L"ReturnValue"), 0, &return_value, NULL, 0);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Unable to get ReturnValue of Win32_Process.Create method.", hr);
-	}
-	if (V_INT(&return_value) != 0)
-	{
-		Log::Error(L"Win32_Process.Create method returned error: %d", V_INT(&return_value));
+		Log::Error(L"[0x%x]", hr);
 	}
 
-	hr = ppOutParams->Get(CComBSTR(L"ProcessId"), 0, &return_value, NULL, 0);
+	if (V_INT(&return_value) != 0)
+	{
+		Log::Error(L"[0x%x]", V_INT(&return_value));
+	}
+
+	hr = outParams->Get(CComBSTR(L"ProcessId"), 0, &return_value, NULL, 0);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Unable to get ProcessId of Win32_Process.Create method.", hr);
+		Log::Error(L"Unable to get ProcessId.", hr);
 	}
 
 	CComBSTR pid = IntegerToString(V_INT(&return_value));
 
-	Log::Info(L"Process with pid [%d] started.", pid);
+	Log::Info(L"Process with pid [%s] was started.", pid);
 
-	int i;
-	bool process_exists;
-	for (i = 0; i < 10; ++i)
-	{
-		process_exists = WMIProcessExists(pid);
-		if (!process_exists)
-		{
-			Log::Info(L"Process [%s] finished.\n", command_line);
-			break;
-		}
-		Sleep(1000);
-		Log::Info(L"Waiting for [%s]...", command_line);
-	}
-
-	if (process_exists)
-	{
-		Log::Error(L"Process was not closed within 20 seconds: [%s]", command_line);
-	}
-}
-
-void WMIRoutine::ExecuteCommand(const CComBSTR & command_line)
-{
-	WMICreateProcess(L"cmd.exe /c /u \"" + command_line + " > C:\\Temp\\log_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%.txt\"");
+	return pid;
 }

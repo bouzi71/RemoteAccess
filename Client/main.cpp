@@ -8,6 +8,8 @@ int main()
 	setlocale(LC_ALL, "Russian");
 	Log::Init();
 
+	Sleep(500);
+
 	WinsockClient client;
 
 	return 0;

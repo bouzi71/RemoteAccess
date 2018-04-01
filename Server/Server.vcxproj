@@ -91,6 +91,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="COMLoader.h" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WinsockServer.h" />
     <ClInclude Include="WinsockServer_RemoteClient.h" />

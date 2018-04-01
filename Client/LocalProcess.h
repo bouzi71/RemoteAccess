@@ -9,7 +9,8 @@ public:
 	~LocalProcess();
 
 public:
-	DWORD WaitProcess();
+	DWORD WaitExitCode();
+	DWORD WaitMessages();
 
 private:
 	CComBSTR                 m_Name;

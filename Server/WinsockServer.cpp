@@ -3,16 +3,13 @@
 // General
 #include "WinsockServer.h"
 
-// Additional
-#include "Log.h"
-
 WinsockServer::WinsockServer()
 {
 	WSADATA wsaData;
 	int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (res != 0)
 	{
-		Log::Error(L"WSAStartup failed with error: [%d]", res);
+		Log::Error(L"[WSAStartup] failed with error: [%d]", res);
 		return;
 	}
 
@@ -27,24 +24,21 @@ WinsockServer::WinsockServer()
 	if (res != 0)
 	{
 		Log::Error(L"[getaddrinfo] failed with error: [%d]", res);
-		WSACleanup();
+		return;
 	}
 
 	m_Socket = socket(m_AddrInfo->ai_family, m_AddrInfo->ai_socktype, m_AddrInfo->ai_protocol);
 	if (m_Socket == INVALID_SOCKET)
 	{
 		Log::Error(L"[socket] failed with error: [%ld]", WSAGetLastError());
-		freeaddrinfo(m_AddrInfo);
-		WSACleanup();
+		return;
 	}
 
 	res = bind(m_Socket, m_AddrInfo->ai_addr, (int)m_AddrInfo->ai_addrlen);
 	if (res == SOCKET_ERROR)
 	{
 		Log::Error(L"[bind] failed with error: [%d]", WSAGetLastError());
-		freeaddrinfo(m_AddrInfo);
-		closesocket(m_Socket);
-		WSACleanup();
+		return;
 	}
 
 	freeaddrinfo(m_AddrInfo);
@@ -54,18 +48,19 @@ WinsockServer::WinsockServer()
 		Log::Error(L"[listen] failed with error: [%d]", WSAGetLastError());
 	}
 
-	// Wait client
 	Log::Warn(L"Waiting for client connection..."); /*gt*/
 	SOCKET ClientSocket = accept(m_Socket, NULL, NULL);
 	if (ClientSocket != INVALID_SOCKET)
 	{
-		Log::Warn(L"Client connected.");
+		Log::Warn(L"The client is connected."); /*gt*/
+
 		m_Client = new WinsockServer_RemoteClient(ClientSocket);
 	}
 }
 
 WinsockServer::~WinsockServer()
 {
+	freeaddrinfo(m_AddrInfo);
 	closesocket(m_Socket);
 	WSACleanup();
 }

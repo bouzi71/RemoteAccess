@@ -5,7 +5,4 @@ class COMLoader
 public:
 	COMLoader();
 	~COMLoader();
-
-private:
-
 };

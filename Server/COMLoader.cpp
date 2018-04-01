@@ -3,9 +3,6 @@
 // General
 #include "COMLoader.h"
 
-// Addition
-#include "Log.h"
-
 COMLoader::COMLoader()
 {
 	HRESULT hr;
@@ -15,7 +12,7 @@ COMLoader::COMLoader()
 	hr = CoInitializeEx(0, COINIT_MULTITHREADED);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Failed to initialize COM library.Error code = %d", hr);
+		Log::Error(L"Failed to initialize COM library. [%x]", hr);
 	}
 
 	// Set general COM security levels --------------------------
@@ -33,7 +30,7 @@ COMLoader::COMLoader()
 	);
 	if (FAILED(hr))
 	{
-		Log::Error(L"Failed to initialize security.Error code= %d", hr);
+		Log::Error(L"Failed to initialize COM security. [%x]", hr);
 	}
 }
 
